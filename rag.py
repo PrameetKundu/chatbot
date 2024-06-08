@@ -29,7 +29,7 @@ loader = PyPDFLoader("SPX.pdf")
 pages = loader.load_and_split()
 
 # Split the document into chunks
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=100)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
 chunks = text_splitter.split_documents(pages)
 
 # Creating Chunks Embedding
@@ -49,6 +49,7 @@ retriever = db_connection.as_retriever(search_kwargs={"k": 5})
 
 
 
+# 
 # Setup chat template
 chat_template = ChatPromptTemplate.from_messages([
     # System Message Prompt Template
@@ -91,6 +92,10 @@ rag_chain = (
 
 
 import streamlit as st
+from langchain_community.chat_message_histories import ChatMessageHistory
+history = ChatMessageHistory()
+
+
 
 st.title("chatbot")
 
@@ -109,12 +114,15 @@ if prompt := st.chat_input("Hi, please proceed with your questions"):
         st.markdown(prompt)
     
     st.session_state.messages.append({"role": "user", "content" : prompt})
+    history.add_user_message(prompt)
     
     
-    response = rag_chain.invoke(prompt)
+    response = rag_chain.invoke( {"messages" : history.messages})
     
     with st.chat_message("assistant"):
         st.markdown(response)
         
     st.session_state.messages.append({"role" : "assistant", "content" : response})
+    history.add_ai_message(response)
+   
     
