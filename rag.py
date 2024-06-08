@@ -8,6 +8,11 @@ from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
 import os
 
 # Read the API key
@@ -42,6 +47,8 @@ db_connection = Chroma(persist_directory="./chroma_db_", embedding_function=embe
 # Converting CHROMA db_connection to Retriever Object
 retriever = db_connection.as_retriever(search_kwargs={"k": 5})
 
+
+
 # Setup chat template
 chat_template = ChatPromptTemplate.from_messages([
     # System Message Prompt Template
@@ -69,14 +76,45 @@ rag_chain = (
     | output_parser
 )
 # Streamlit UI
-with st.sidebar:
-    st.title(":blue[A Retrieval Augmented System on the 'Leave No Context Behind' Paper]")
-st.title(":blue[💬Document Chatbot]")
-query = st.text_area("Enter your query:", placeholder="Enter your query here...", height=100)
+# with st.sidebar:
+#     st.title(":blue[A Retrieval Augmented System on the 'Leave No Context Behind' Paper]")
+# st.title(":blue[💬Document Chatbot]")
+# query = st.text_area("Enter your query:", placeholder="Enter your query here...", height=100)
 
-if st.button("Submit Your Query"):
-    if query:
-        response = rag_chain.invoke(query)
-        st.write(response)
-    else:
-        st.warning("Please enter a question.")
+# if st.button("Submit Your Query"):
+#     if query:
+#         response = rag_chain.invoke(query)
+#         st.write(response)
+#     else:
+#         st.warning("Please enter a question.")
+
+
+
+import streamlit as st
+
+st.title("chatbot")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+
+if prompt := st.chat_input("Hi, please proceed with your questions"):
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    st.session_state.messages.append({"role": "user", "content" : prompt})
+    
+    
+    response = rag_chain.invoke(prompt)
+    
+    with st.chat_message("assistant"):
+        st.markdown(response)
+        
+    st.session_state.messages.append({"role" : "assistant", "content" : response})
+    
