@@ -1,31 +1,34 @@
 import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI
+import langchain_core
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import NLTKTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+import os
 
 # Read the API key
 f = open("keys/.gemini_api_key.txt")
 key = f.read()
 
+import os 
+os.environ["GOOGLE_API_KEY"] = key
 #  Setup chat model
-chat_model = ChatGoogleGenerativeAI(google_api_key=key, model="gemini-1.5-pro-latest")
+chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 
 # Load the doc
-loader = PyPDFLoader("LeaveNoContextBehind.pdf")
+loader = PyPDFLoader("SPX.pdf")
 pages = loader.load_and_split()
 
 # Split the document into chunks
-text_splitter = NLTKTextSplitter(chunk_size=500, chunk_overlap=100)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=100)
 chunks = text_splitter.split_documents(pages)
 
 # Creating Chunks Embedding
-embedding_model = GoogleGenerativeAIEmbeddings(google_api_key=key, model="models/embedding-001")
+embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
 # Embed each chunk and load it into the vector store
 db = Chroma.from_documents(chunks, embedding_model, persist_directory="./chroma_db_")
