@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi import Request
 from fastapi.responses import (
     HTMLResponse,
@@ -6,16 +6,26 @@ from fastapi.responses import (
 
 from pydantic import BaseModel
 
-from rag import DocumentQueryService
-
-app = FastAPI()
+from service import DocumentQueryService
 
 
 class Request(BaseModel):
     query: str
 
-@app.post("/query")
-def returnResponse(request : Request):
-    queryService = DocumentQueryService()
-    response = queryService.rag_chain.invoke(request.query)
-    return {"response" : response}
+class QueryAPI:
+
+    def __init__(self):
+        self.query_Service = DocumentQueryService()
+        self.router = APIRouter()
+        self.router.add_api_route("/query", self.get_response, methods=["POST"])
+
+    def get_response(self, request : Request):
+        response = self.query_Service.rag_chain.invoke(request.query)
+        return HTMLResponse(response)
+        
+        
+
+
+app = FastAPI()
+queryAPI = QueryAPI()
+app.include_router(queryAPI.router)
