@@ -3,6 +3,9 @@
 
 Add the api key in keys/.gemini_api_key.txt
 
-run the chainlit implementation using python -m chainlit run chatbot.py
+run the chainlit implementation using "python -m chainlit run chatbot.py"
 
-run the streamlit implementation using python -m streamlit run rag.py
+creaste fastAPI uvicorn server using "uvicorn app:app --reload"
+
+API endpoint: http://127.0.0.1:8000/query [POST]
+body json: {"query": **enter your query here**}
