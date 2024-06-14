@@ -2,6 +2,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, FastAPI
 from fastapi import Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     HTMLResponse,
     JSONResponse
@@ -15,12 +16,27 @@ from service import DocumentQueryService
 # class Request(BaseModel):
 #     query: str
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080"
+]
+
 class QueryAPI:
 
     def __init__(self):
         self.query_Service = DocumentQueryService()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*', 'http://127.0.0.1:8080'],
+    allow_credentials=True,
+    allow_methods=["POST", "GET"],
+    allow_headers=["*"],
+)
+
 queryAPI = QueryAPI()
 app.mount(path="/static", app=StaticFiles(directory="static", html=True),name="static")
 templates = Jinja2Templates(directory="templates")

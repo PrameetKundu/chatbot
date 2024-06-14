@@ -19,35 +19,13 @@ const createChatLi = (message, className) => {
     chatLi.querySelector("p").textContent = message;
     return chatLi; // return chat <li> element
 }
-const generateResponse1= async (chatElement) => {
-    var settings = {
-        "url": "http://127.0.0.1:8000/query/",
-        "method": "POST",
-        "mode":"no-cors",
-        "timeout": 0,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "data": JSON.stringify({
-          "query": "how to do transactions"
-        }),
-      };
-      
-      $.ajax(settings).done(function (response) {
-        console.log(response);
-      });
-  }
-
 const generateResponse = async (chatElement) => {
     const API_URL = 'http://127.0.0.1:8000/query/';
     const messageElement = chatElement.querySelector("p");
-    console.log("user entered");
-    console.log(userMessage);
 
     const requestOptions = {
         method: "POST",
-        mode: "no-cors",
-        headers: {                        
+        headers: {                      
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -55,18 +33,14 @@ const generateResponse = async (chatElement) => {
         })
     }
 
-    // Send POST request to API, get response and set the reponse as paragraph text
-    // await fetch(API_URL, requestOptions)
-    // .then(res => res.json())
-    // .then(data => console.log(data))
-    // .catch((error) => {
-    //     console.log(error);
-    //     messageElement.classList.add("error");
-    //     messageElement.textContent = "Oops! Something went wrong. Please try again.";
-    // }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
-    console.log(requestOptions)
-    const response = await (await fetch (API_URL, requestOptions))
-    console.log(response)
+    fetch(API_URL, requestOptions)
+    .then(res => res.json())
+    .then(data => {
+        messageElement.textContent = data.response.trim();
+    }).catch(() => {
+        messageElement.classList.add("error");
+        messageElement.textContent = "Oops! Something went wrong. Please try again.";
+    }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
 }
 
 const handleChat = () => {
