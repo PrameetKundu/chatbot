@@ -10,6 +10,7 @@ from langchain.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
 )
+from langchain_huggingface import HuggingFaceEmbeddings
 import os
 
 class DocumentQueryService:
@@ -25,15 +26,16 @@ class DocumentQueryService:
 
     # Load the doc
     def load_documents(self):
-        self.loader = PyPDFLoader("instructions.pdf")
+        self.loader = PyPDFLoader("https://www.wellsfargo.com/fetch-pdf?formNumber=CNS2013&subProductCode=ANY")
         self.pages = self.loader.load_and_split()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
         self.chunks = text_splitter.split_documents(self.pages)
+        print(len(self.chunks))
 
     
     def create_embeddings(self):
         self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-        db = Chroma.from_documents(self.chunks, self.embedding_model, persist_directory="./chroma_db_")
+        db = Chroma.from_documents(self.chunks[0:5], self.embedding_model, persist_directory="./chroma_db_")        
         db.persist()
         db_connection = Chroma(persist_directory="./chroma_db_", embedding_function=self.embedding_model)
         self.retriever = db_connection.as_retriever(search_kwargs={"k": 5})

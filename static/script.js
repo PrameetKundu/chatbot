@@ -19,13 +19,17 @@ const createChatLi = (message, className) => {
     chatLi.querySelector("p").textContent = message;
     return chatLi; // return chat <li> element
 }
+
 const generateResponse = async (chatElement) => {
-    const API_URL = 'http://127.0.0.1:8000/query/';
+    const API_URL = '/query';
     const messageElement = chatElement.querySelector("p");
+    console.log("user entered");
+    console.log(userMessage);
 
     const requestOptions = {
         method: "POST",
-        headers: {                      
+        mode: "no-cors",
+        headers: {                        
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -33,11 +37,12 @@ const generateResponse = async (chatElement) => {
         })
     }
 
-    fetch(API_URL, requestOptions)
+    // Send POST request to API, get response and set the reponse as paragraph text
+    await fetch(API_URL, requestOptions)
     .then(res => res.json())
-    .then(data => {
-        messageElement.textContent = data.response.trim();
-    }).catch(() => {
+    .then(data => messageElement.textContent =data.response)    
+    .catch((error) => {
+        console.log(error);
         messageElement.classList.add("error");
         messageElement.textContent = "Oops! Something went wrong. Please try again.";
     }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
