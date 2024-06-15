@@ -22,7 +22,7 @@ cursor: pointer;
 align-items: center;
 justify-content: center;
 border-radius: 50%;
-background: #724ae8;
+background: #910505;
 transition: all 0.2s ease;
 }
 body.show-chatbot .chatbot-toggler {
@@ -111,7 +111,7 @@ cursor: default;
 text-align: center;
 line-height: 32px;
 align-self: flex-end;
-background: #724ae8;
+background: #e80404;
 border-radius: 4px;
 margin: 0 10px 7px 0;
 }
@@ -122,7 +122,7 @@ border-radius: 10px 10px 0 10px;
 max-width: 75%;
 color: #fff;
 font-size: 0.95rem;
-background: #724ae8;
+background: hsl(53, 77%, 60%);
 }
 .chatbox .incoming p {
 border-radius: 10px 10px 10px 0;
