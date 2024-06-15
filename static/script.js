@@ -1,5 +1,3 @@
-// import axios from 'axios';
-
 const chatbotToggler = document.querySelector(".chatbot-toggler");
 const closeBtn = document.querySelector(".close-btn");
 const chatbox = document.querySelector(".chatbox");
@@ -14,17 +12,14 @@ const createChatLi = (message, className) => {
     // Create a chat <li> element with passed message and className
     const chatLi = document.createElement("li");
     chatLi.classList.add("chat", `${className}`);
-    let chatContent = className === "outgoing" ? `<p></p>` : `<span class="material-symbols-outlined">smart_toy</span><p></p>`;
+    let chatContent = className === "outgoing" ? `<p>${message}</p>` : `<span class="material-symbols-outlined">headset_mic</span><p>${message}</p>`;
     chatLi.innerHTML = chatContent;
-    chatLi.querySelector("p").textContent = message;
     return chatLi; // return chat <li> element
 }
 
 const generateResponse = async (chatElement) => {
     const API_URL = '/query';
     const messageElement = chatElement.querySelector("p");
-    console.log("user entered");
-    console.log(userMessage);
 
     const requestOptions = {
         method: "POST",
@@ -40,7 +35,16 @@ const generateResponse = async (chatElement) => {
     // Send POST request to API, get response and set the reponse as paragraph text
     await fetch(API_URL, requestOptions)
     .then(res => res.json())
-    .then(data => messageElement.textContent =data.response)    
+    .then(data => {
+        let response = data.response;
+        const shortResponse = response.substring(0, 100);
+        const fullResponse = response;
+        chatElement.innerHTML = `
+            <span class="material-symbols-outlined">headset_mic</span>
+                <p class="short-response">${shortResponse}...<a class="show-more" onclick="showMore(this)">Show more</a></p>
+                <p class="full-response" style="display: none;">${fullResponse}<a class="show-less" onclick="showLess(this)">Show less</a></p>         
+        `;
+    })    
     .catch((error) => {
         console.log(error);
         messageElement.classList.add("error");
@@ -87,3 +91,15 @@ chatInput.addEventListener("keydown", (e) => {
 sendChatBtn.addEventListener("click", handleChat);
 closeBtn.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+
+function showMore(element) {
+    const messageDiv = element.parentElement.parentElement;
+    messageDiv.querySelector('.short-response').style.display = 'none';
+    messageDiv.querySelector('.full-response').style.display = 'inline';
+}
+
+function showLess(element) {
+    const messageDiv = element.parentElement.parentElement;
+    messageDiv.querySelector('.short-response').style.display = 'inline';
+    messageDiv.querySelector('.full-response').style.display = 'none';
+}
