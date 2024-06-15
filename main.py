@@ -11,6 +11,7 @@ from fastapi.responses import (
 from pydantic import BaseModel
 
 from service import DocumentQueryService
+from servicev2 import DocumentQueryServicev2
 
 
 # class Request(BaseModel):
@@ -26,6 +27,7 @@ class QueryAPI:
 
     def __init__(self):
         self.query_Service = DocumentQueryService()
+        self.query_Service_v2 = DocumentQueryServicev2()
 
 app = FastAPI()
 
@@ -51,3 +53,10 @@ async def query(request: Request):
     requestJson = await request.json()
     response = queryAPI.query_Service.rag_chain.invoke(requestJson['query'])
     return JSONResponse(content={'response':response})
+    
+@app.post("/queryv2", response_class=JSONResponse)
+async def query(request: Request):
+    requestJson = await request.json()
+    response = queryAPI.query_Service_v2.rag_chain.invoke({'query': requestJson['query']})
+    print(response)
+    return JSONResponse(content={'response': response['result'], 'sources': [i.metadata for i in response['source_documents']]})
