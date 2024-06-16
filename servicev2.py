@@ -35,20 +35,22 @@ class DocumentQueryServicev2:
         self.pages = self.loader.load_and_split()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=400)
         self.chunks = text_splitter.split_documents(self.pages)
-        # print(len(self.chunks))
+        print(len(self.chunks))
 
     
     def create_embeddings(self):
         self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-        db = Chroma.from_documents(self.chunks, self.embedding_model, persist_directory="./chroma_db_")        
-        db.persist()
+        db = Chroma.from_documents(self.chunks, self.embedding_model, persist_directory="./chroma_db_v2_")        
+        db.persist()             
+
+    def infoRetriever(self):    
+        self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        db = Chroma(persist_directory="./chroma_db_v2_", embedding_function=self.embedding_model)
         self.retriever = ContextualCompressionRetriever(
             base_compressor= CohereRerank(), 
-            base_retriever=db.as_retriever(search_kwargs={"k": 4}),
+            base_retriever=db.as_retriever(search_kwargs={"k": 3}),
             searchType = 'mmr'
-        )       
-
-
+        )
 
     def setup_chat_template(self):
         self.chat_template = ChatPromptTemplate.from_messages([
@@ -83,8 +85,9 @@ class DocumentQueryServicev2:
     
     def __init__(self) -> None:
         self.initialise_genai_model()
-        self.load_documents()
-        self.create_embeddings()
+        #self.load_documents()
+        #self.create_embeddings()
+        self.infoRetriever()
         self.setup_chat_template()
         self.setup_rag_chain()
         

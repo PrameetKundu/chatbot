@@ -48,13 +48,13 @@ async def root(request: Request):
     print(request)
     return templates.TemplateResponse(request=request, name="index.html")        
 
-@app.post("/query", response_class=JSONResponse)
+@app.post("/v1/query", response_class=JSONResponse)
 async def query(request: Request):
     requestJson = await request.json()
     response = queryAPI.query_Service.rag_chain.invoke(requestJson['query'])
     return JSONResponse(content={'response':response})
     
-@app.post("/queryv2", response_class=JSONResponse)
+@app.post("/v2/query", response_class=JSONResponse)
 async def query(request: Request):
     requestJson = await request.json()
     response = queryAPI.query_Service_v2.rag_chain.invoke({'query': requestJson['query']})

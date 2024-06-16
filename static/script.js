@@ -18,7 +18,7 @@ const createChatLi = (message, className) => {
 }
 
 const generateResponse = async (chatElement) => {
-    const API_URL = '/query';
+    const API_URL = '/v2/query';
     const messageElement = chatElement.querySelector("p");
 
     const requestOptions = {
@@ -38,6 +38,7 @@ const generateResponse = async (chatElement) => {
     .then(data => {
         let response = data.response;
         const shortResponse = response.substring(0, 100);
+        console.log(data.sources)
         const fullResponse = response;
         chatElement.innerHTML = `
             <span class="material-symbols-outlined">headset_mic</span>
@@ -102,4 +103,10 @@ function showLess(element) {
     const messageDiv = element.parentElement.parentElement;
     messageDiv.querySelector('.short-response').style.display = 'inline';
     messageDiv.querySelector('.full-response').style.display = 'none';
+}
+
+function GetUserName()
+{
+    var wshell = new ActiveXObject("WScript.Shell");
+    alert(wshell.ExpandEnvironmentStrings("%USERNAME%"));
 }
