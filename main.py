@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from service import DocumentQueryService
 from servicev2 import DocumentQueryServicev2
+from servicev3 import DocumentQueryServicev3
 
 
 # class Request(BaseModel):
@@ -28,6 +29,7 @@ class QueryAPI:
     def __init__(self):
         self.query_Service = DocumentQueryService()
         self.query_Service_v2 = DocumentQueryServicev2()
+        self.query_Service_v3 = DocumentQueryServicev3()
 
 app = FastAPI()
 
@@ -58,5 +60,12 @@ async def query(request: Request):
 async def query(request: Request):
     requestJson = await request.json()
     response = queryAPI.query_Service_v2.rag_chain.invoke({'query': requestJson['query']})
+    print(response)
+    return JSONResponse(content={'response': response['result'], 'sources': [i.metadata for i in response['source_documents']]})
+
+@app.post("/v3/query", response_class=JSONResponse)
+async def query(request: Request):
+    requestJson = await request.json()
+    response = queryAPI.query_Service_v3.rag_chain.invoke({'query': requestJson['query']})
     print(response)
     return JSONResponse(content={'response': response['result'], 'sources': [i.metadata for i in response['source_documents']]})

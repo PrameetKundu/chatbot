@@ -33,7 +33,7 @@ class DocumentQueryServicev2:
     def load_documents(self):
         self.loader = PyPDFLoader("https://www.wellsfargo.com/fetch-pdf?formNumber=CNS2013&subProductCode=ANY")
         self.pages = self.loader.load_and_split()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=400)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         self.chunks = text_splitter.split_documents(self.pages)
         print(len(self.chunks))
 
@@ -49,7 +49,7 @@ class DocumentQueryServicev2:
         self.retriever = ContextualCompressionRetriever(
             base_compressor= CohereRerank(), 
             base_retriever=db.as_retriever(search_kwargs={"k": 3}),
-            searchType = 'mmr'
+            searchType = 'similarity'
         )
 
     def setup_chat_template(self):
