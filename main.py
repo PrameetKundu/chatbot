@@ -1,3 +1,4 @@
+from typing import List
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, FastAPI
@@ -7,9 +8,11 @@ from fastapi.responses import (
     HTMLResponse,
     JSONResponse
 )
-
-from pydantic import BaseModel
-
+import os, io
+import time
+from time import perf_counter
+import json
+import jsons
 from service import DocumentQueryService
 from servicev2 import DocumentQueryServicev2
 
@@ -45,18 +48,54 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
+    
     print(request)
     return templates.TemplateResponse(request=request, name="index.html")        
 
 @app.post("/v1/query", response_class=JSONResponse)
 async def query(request: Request):
+    logger = {}
+    logger["endpoint"] = "/v1/query"
+    logger["starting time"] = time.ctime()
+    time1 = time.perf_counter()
     requestJson = await request.json()
     response = queryAPI.query_Service.rag_chain.invoke(requestJson['query'])
-    return JSONResponse(content={'response':response})
+    logger["time elapsed"] = time.perf_counter() - time1
+    logger["response"] = response
+    try:
+        return JSONResponse(content={'response':response})
+    finally:
+        write_to_log(logger)
     
 @app.post("/v2/query", response_class=JSONResponse)
 async def query(request: Request):
+    logger = {}
+    logger["endpoint"] = "/v2/query"
+    logger["starting time"] = time.ctime()
+    time1 = time.perf_counter()
     requestJson = await request.json()
     response = queryAPI.query_Service_v2.rag_chain.invoke({'query': requestJson['query']})
-    print(response)
-    return JSONResponse(content={'response': response['result'], 'sources': [i.metadata for i in response['source_documents']]})
+    logger["time elapsed"] = time.perf_counter() - time1
+    # print(response)
+    logger["response"] = {'response': response['result'], 'sources': [{'page-content' : i.page_content, 'metadata':i.metadata} for i in response['source_documents']]}
+    try:
+        return JSONResponse(content={'response': response['result'], 'sources': [{'page-content' : i.page_content, 'metadata':i.metadata} for i in response['source_documents']]})
+    finally:
+        write_to_log(logger)
+
+def write_to_log(data_dict):
+    fname = "log.json"
+    if os.path.isfile(fname):
+        # File exists
+        with open(fname, 'a+') as outfile:
+            # outfile.seek(-1, os.SEEK_END)
+            data = list(outfile)
+            data.append(data_dict)
+            json.dump(data, outfile)
+    else: 
+        # Create file
+        with open(fname, 'w') as outfile:
+            array = []
+            array.append(data_dict)
+            json.dump(array, outfile)
+            
