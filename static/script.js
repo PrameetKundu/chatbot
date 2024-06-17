@@ -3,6 +3,7 @@ const closeBtn = document.querySelector(".close-btn");
 const chatbox = document.querySelector(".chatbox");
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".chat-input span");
+const versionSelector = document.querySelector(".select-version")
 
 let userMessage = null; // Variable to store user's message
 const API_KEY = "PASTE-YOUR-API-KEY"; // Paste your API key here
@@ -18,7 +19,10 @@ const createChatLi = (message, className) => {
 }
 
 const generateResponse = async (chatEle) => {
-    const API_URL = '/v2/query';
+    let API_URL = '/v2/query';
+    if(versionSelector.value == "version1"){
+        API_URL = '/v1/query';
+    }
     const messageElement = chatEle.querySelector("p");
 
     const requestOptions = {
@@ -65,33 +69,37 @@ const generateResponse = async (chatEle) => {
         responseContent.appendChild(createTabContentElement(response, wordLimit));
         chatElement.appendChild(responseContent);
         tabContents.push(responseContent);
+        console.log(typeof sources);
 
         // Source tabs
-        sources.forEach((source, index) => {
-            if(source.metadata.relevance_score >= 0.01){
-                const tab = document.createElement("div");
-                tab.className = "tab";
-                tab.innerText = `Source ${index + 1}`;
-                tabContainer.appendChild(tab);
-                tabs.push(tab);
-
-                const content = document.createElement("div");
-                content.className = "tab-content";
-                content.appendChild(createSourceTabContentElement(source, 10));
-                chatElement.appendChild(content);
-                tabContents.push(content);
-            }
-        });
-
-        // Add event listeners for tabs
-        tabs.forEach((tab, index) => {
-            tab.addEventListener("click", () => {
-                tabs.forEach(t => t.classList.remove("active"));
-                tabContents.forEach(tc => tc.classList.remove("active"));
-                tab.classList.add("active");
-                tabContents[index].classList.add("active");
+        if(typeof sources != 'undefined'){
+            sources.forEach((source, index) => {
+                if(source.metadata.relevance_score >= 0.01){
+                    const tab = document.createElement("div");
+                    tab.className = "tab";
+                    tab.innerText = `Source ${index + 1}`;
+                    tabContainer.appendChild(tab);
+                    tabs.push(tab);
+    
+                    const content = document.createElement("div");
+                    content.className = "tab-content";
+                    content.appendChild(createSourceTabContentElement(source, 10));
+                    chatElement.appendChild(content);
+                    tabContents.push(content);
+                }
             });
-        });
+    
+            // Add event listeners for tabs
+            tabs.forEach((tab, index) => {
+                tab.addEventListener("click", () => {
+                    tabs.forEach(t => t.classList.remove("active"));
+                    tabContents.forEach(tc => tc.classList.remove("active"));
+                    tab.classList.add("active");
+                    tabContents[index].classList.add("active");
+                });
+            });
+        }
+        
 
         chatElement.insertBefore(tabContainer, chatElement.firstChild);
         chatEle.appendChild(chatElement);
@@ -200,14 +208,20 @@ function createTabContentElement(content, wordLimit) {
 
 function createSourceTabContentElement(content, wordLimit) {
     const contentElement = document.createElement("div");   
-    console.log(content['page-content']);
-    const { truncated, original, isTruncated } = truncateText(content['page-content'], wordLimit);
-    console.log(truncated)
+    // console.log(content['page-content']);
+    let { truncated, original, isTruncated } = truncateText(content['page-content'], wordLimit);
+    // console.log(truncated)
     const textElement = document.createElement("span");
-    textElement.innerHTML = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
+    truncated = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
         <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
         <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
         <p class="metadata"><span class="metadata-type">Metadata: </span>${truncated}</p>`;
+
+    original = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
+        <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
+        <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
+        <p class="metadata"><span class="metadata-type">Metadata: </span>${original}</p>`;
+    textElement.innerHTML = truncated;
     contentElement.appendChild(textElement);
 
     if (isTruncated) {
@@ -240,24 +254,10 @@ function createSourceTabContentElement(content, wordLimit) {
 
 
 function truncateText(text, wordLimit) {
-    const words = cleanText(text).split(" ");
+    const words = text.split(" ");
     if (words.length <= wordLimit) {
         return { truncated: text, original: text, isTruncated: false };
     }
     const truncated = words.slice(0, wordLimit).join(" ") + "...";
     return { truncated: truncated, original: text, isTruncated: true };
-}
-
-function cleanText(text) {
-
-    // Remove all non-alphanumeric characters
-    let cleanedText = String(text).replace(/[^a-zA-Z0-9\s]/g, '');
-    
-    // Replace multiple spaces with a single space
-    cleanedText = cleanedText.replace(/\s+/g, ' ');
-    
-    // Trim leading and trailing spaces
-    cleanedText = cleanedText.trim();
-    console.log(cleanedText)
-    return cleanedText;
 }
