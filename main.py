@@ -59,4 +59,4 @@ async def query(request: Request):
     requestJson = await request.json()
     response = queryAPI.query_Service_v2.rag_chain.invoke({'query': requestJson['query']})
     print(response)
-    return JSONResponse(content={'response': response['result'], 'sources': [i.metadata for i in response['source_documents']]})
+    return JSONResponse(content={'response': response['result'], 'sources': [{'page_content': i.page_content, 'metadata':i.metadata} for i in response['source_documents']]})

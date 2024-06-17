@@ -18,7 +18,7 @@ const createChatLi = (message, className) => {
 }
 
 const generateResponse = async (chatEle) => {
-    const API_URL = '/v1/query';
+    const API_URL = '/v2/query';
     const messageElement = chatEle.querySelector("p");
 
     const requestOptions = {
@@ -36,14 +36,9 @@ const generateResponse = async (chatEle) => {
     await fetch(API_URL, requestOptions)
     .then(res => res.json())
     .then(data => {
-    const sources = [
-        "Source 1: This is the first source This is the first source This is the first source This is the first source This is the first source .",
-        "Source 2: This is the second source.",
-        "Source 3: This is the third source.",
-        "Source 4: This is the fourth source."
-    ];
+        const sources = data.sources;
         let response = data.response;
-
+        console.log(data);
         chatEle.innerHTML =`<span class="material-symbols-outlined headset-mic">headset_mic</span>`;
         // Create the main chat element
         const chatElement = document.createElement("div");
@@ -73,17 +68,19 @@ const generateResponse = async (chatEle) => {
 
         // Source tabs
         sources.forEach((source, index) => {
-            const tab = document.createElement("div");
-            tab.className = "tab";
-            tab.innerText = `Source ${index + 1}`;
-            tabContainer.appendChild(tab);
-            tabs.push(tab);
+            if(source.metadata.relevance_score >= 0.01){
+                const tab = document.createElement("div");
+                tab.className = "tab";
+                tab.innerText = `Source ${index + 1}`;
+                tabContainer.appendChild(tab);
+                tabs.push(tab);
 
-            const content = document.createElement("div");
-            content.className = "tab-content";
-            content.appendChild(createTabContentElement(source, wordLimit));
-            chatElement.appendChild(content);
-            tabContents.push(content);
+                const content = document.createElement("div");
+                content.className = "tab-content";
+                content.appendChild(createSourceTabContentElement(source, 10));
+                chatElement.appendChild(content);
+                tabContents.push(content);
+            }
         });
 
         // Add event listeners for tabs
@@ -201,11 +198,66 @@ function createTabContentElement(content, wordLimit) {
     return contentElement;
 }
 
+function createSourceTabContentElement(content, wordLimit) {
+    const contentElement = document.createElement("div");   
+    console.log(content.page_content);
+    const { truncated, original, isTruncated } = truncateText(content.page-content, wordLimit);
+
+    const textElement = document.createElement("span");
+    textElement.innerHTML = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
+        <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
+        <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
+        <p class="metadata"><span class="metadata-type">Metadata: </span>${truncated}</p>`;
+    contentElement.appendChild(textElement);
+
+    if (isTruncated) {
+        const showMoreLink = document.createElement("span");
+        showMoreLink.className = "show-more-less";
+        showMoreLink.innerText = " Show more";
+        contentElement.appendChild(showMoreLink);
+
+        const showLessLink = document.createElement("span");
+        showLessLink.className = "show-more-less";
+        showLessLink.innerText = " Show less";
+        showLessLink.style.display = "none";
+        contentElement.appendChild(showLessLink);
+
+        showMoreLink.addEventListener("click", () => {
+            textElement.innerHTML = original;
+            showMoreLink.style.display = "none";
+            showLessLink.style.display = "inline";
+        });
+
+        showLessLink.addEventListener("click", () => {
+            textElement.innerHTML = truncated;
+            showMoreLink.style.display = "inline";
+            showLessLink.style.display = "none";
+        });
+    }
+
+    return contentElement;
+}
+
+
 function truncateText(text, wordLimit) {
-    const words = text.split(" ");
+    const words = cleanText(text).split(" ");
     if (words.length <= wordLimit) {
         return { truncated: text, original: text, isTruncated: false };
     }
-    const truncated = words.slice(0, wordLimit).join(" ");
+    const truncated = words.slice(0, wordLimit).join(" ") + "...";
     return { truncated: truncated, original: text, isTruncated: true };
+}
+
+function cleanText(text) {
+
+    // Remove all non-alphanumeric characters
+    let cleanedText = String(text).replace(/[^a-zA-Z0-9\s]/g, '');
+    
+    // Replace multiple spaces with a single space
+    cleanedText = cleanedText.replace(/\s+/g, ' ');
+    
+    // Trim leading and trailing spaces
+    cleanedText = cleanedText.trim();
+    
+    return cleanedText;
 }
