@@ -215,12 +215,12 @@ function createSourceTabContentElement(content, wordLimit) {
     truncated = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
         <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
         <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
-        <p class="metadata"><span class="metadata-type">Metadata: </span>${truncated}</p>`;
+        <span class="metadata"><span class="metadata-type">Metadata: </span>${truncated}</span>`;
 
     original = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
         <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
         <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
-        <p class="metadata"><span class="metadata-type">Metadata: </span>${original}</p>`;
+        <span class="metadata"><span class="metadata-type">Metadata: </span>${original}</span>`;
     textElement.innerHTML = truncated;
     contentElement.appendChild(textElement);
 
@@ -254,10 +254,25 @@ function createSourceTabContentElement(content, wordLimit) {
 
 
 function truncateText(text, wordLimit) {
-    const words = text.split(" ");
+    const words = cleanText(text).split(" ");
     if (words.length <= wordLimit) {
         return { truncated: text, original: text, isTruncated: false };
     }
     const truncated = words.slice(0, wordLimit).join(" ") + "...";
+    console.log(truncated);
     return { truncated: truncated, original: text, isTruncated: true };
+}
+
+function cleanText(text) {
+
+    // Remove all non-alphanumeric characters
+    let cleanedText = String(text).replace(/[^a-zA-Z0-9\s]/g, '');
+    
+    // Replace multiple spaces with a single space
+    cleanedText = cleanedText.replace(/\s+/g, ' ');
+    
+    // Trim leading and trailing spaces
+    cleanedText = cleanedText.trim();
+    console.log(cleanedText)
+    return cleanedText;
 }
