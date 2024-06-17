@@ -102,10 +102,10 @@ list-style: none;
 margin: 20px 0;
 justify-content: flex-end;
 }
-.headset-mic {
+.chatbox .incoming span {
   color: #fff;
   cursor: default;
-  /* line-height: 30px; */
+  line-height: 30px;
   align-self: flex-end;
   margin: 0 10px;
   color: rgb(59, 51, 49);
@@ -118,16 +118,17 @@ max-width: 75%;
 color:rgb(59,51,49);
 font-size: 0.95rem;
 background: rgb(255, 240, 200);
-word-wrap: break-word;
 }
-
+.chatbox .incoming p {
+border-radius: 10px 10px 10px 0;
+}
 .chatbox .chat p.error {
 color: #721c24;
 background: #f8d7da;
 }
 .chatbox .incoming p {
-background: rgb(228, 230, 231);
-border-radius: 10px 10px 10px 0;
+color: #000;
+background: #f2f2f2;
 }
 .chatbot .chat-input {
 display: flex;
@@ -154,7 +155,7 @@ background: rgb(228, 230, 231);
 }
 .chat-input span {
 align-self: flex-end;
-color: rgb(215, 30, 40);
+color: #f70606;
 cursor: pointer;
 height: 55px;
 display: flex;
@@ -208,64 +209,6 @@ h2 {
   color: blue;
   cursor: pointer;
   text-decoration: underline;
-}
-
-.tab-container {
-  display: flex;
-  overflow-x: auto;
-  border-radius: 14px 14px 0px 0px;
-  border-bottom: 1px solid rgb(169, 169, 170);
-}
-
-.tab-container::-webkit-scrollbar {
-  display: none; 
-}
-
-.tab {
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  font-size: 0.95rem;
-  color:rgb(59,51,49);
-  transition: background-color 0.3s;
-}
-
-.tab-content {
-  display: none;
-  padding:  6px 12px 12px 12px;
-  font-size: 0.95rem;
-  color:rgb(59,51,49);
-}
-
-.tab.active {
-  background-color: rgb(169, 169, 170);
-  color: white;
-  border-radius: 14px 14px 0px 0px;
-  z-index: 2;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-.show-more-less {
-  color: blue;
-  cursor: pointer;
-}
-
-.chat-element{
-  max-width: 75%;
-  background: rgb(228, 230, 231);
-  border-radius: 14px 14px 14px 0px;
-}
-
-.tab-content p{
-  padding: 0px !important;
-  max-width: 100% !important;
-}
-
-.metadata-type{ 
-  color: rgb(120 2 9);
 }
 
 @media (max-width: 490px) {

@@ -99,3 +99,4 @@ def write_to_log(data_dict):
             array.append(data_dict)
             json.dump(array, outfile)
             
+    

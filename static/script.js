@@ -12,14 +12,14 @@ const createChatLi = (message, className) => {
     // Create a chat <li> element with passed message and className
     const chatLi = document.createElement("li");
     chatLi.classList.add("chat", `${className}`);
-    let chatContent = className === "outgoing" ? `<p>${message}</p>` : `<span class="material-symbols-outlined">headset_mic</span><p>${message}</p>`;
+    let chatContent = className === "outgoing" ? `<p>${message}</p>` : `<span class="material-symbols-outlined headset-mic">headset_mic</span><p>${message}</p>`;
     chatLi.innerHTML = chatContent;
     return chatLi; // return chat <li> element
 }
 
-const generateResponse = async (chatElement) => {
+const generateResponse = async (chatEle) => {
     const API_URL = '/v2/query';
-    const messageElement = chatElement.querySelector("p");
+    const messageElement = chatEle.querySelector("p");
 
     const requestOptions = {
         method: "POST",
@@ -36,15 +36,65 @@ const generateResponse = async (chatElement) => {
     await fetch(API_URL, requestOptions)
     .then(res => res.json())
     .then(data => {
+        const sources = data.sources;
         let response = data.response;
-        const shortResponse = response.substring(0, 100);
-        console.log(data.sources)
-        const fullResponse = response;
-        chatElement.innerHTML = `
-            <span class="material-symbols-outlined">headset_mic</span>
-                <p class="short-response">${shortResponse}...<a class="show-more" onclick="showMore(this)">Show more</a></p>
-                <p class="full-response" style="display: none;">${fullResponse}<a class="show-less" onclick="showLess(this)">Show less</a></p>         
-        `;
+        console.log(data);
+        chatEle.innerHTML =`<span class="material-symbols-outlined headset-mic">headset_mic</span>`;
+        // Create the main chat element
+        const chatElement = document.createElement("div");
+        chatElement.className = "chat-element";
+
+        // Create tab container
+        const tabContainer = document.createElement("div");
+        tabContainer.className = "tab-container";
+
+        // Create tabs and content
+        const tabs = [];
+        const tabContents = [];
+
+        // Response tab
+        const responseTab = document.createElement("div");
+        responseTab.className = "tab active";
+        responseTab.innerText = "Response";
+        tabContainer.appendChild(responseTab);
+        tabs.push(responseTab);
+
+        const responseContent = document.createElement("div");
+        responseContent.className = "tab-content active";
+        const wordLimit = 30;
+        responseContent.appendChild(createTabContentElement(response, wordLimit));
+        chatElement.appendChild(responseContent);
+        tabContents.push(responseContent);
+
+        // Source tabs
+        sources.forEach((source, index) => {
+            if(source.metadata.relevance_score >= 0.01){
+                const tab = document.createElement("div");
+                tab.className = "tab";
+                tab.innerText = `Source ${index + 1}`;
+                tabContainer.appendChild(tab);
+                tabs.push(tab);
+
+                const content = document.createElement("div");
+                content.className = "tab-content";
+                content.appendChild(createSourceTabContentElement(source, 10));
+                chatElement.appendChild(content);
+                tabContents.push(content);
+            }
+        });
+
+        // Add event listeners for tabs
+        tabs.forEach((tab, index) => {
+            tab.addEventListener("click", () => {
+                tabs.forEach(t => t.classList.remove("active"));
+                tabContents.forEach(tc => tc.classList.remove("active"));
+                tab.classList.add("active");
+                tabContents[index].classList.add("active");
+            });
+        });
+
+        chatElement.insertBefore(tabContainer, chatElement.firstChild);
+        chatEle.appendChild(chatElement);
     })    
     .catch((error) => {
         console.log(error);
@@ -109,4 +159,105 @@ function GetUserName()
 {
     var wshell = new ActiveXObject("WScript.Shell");
     alert(wshell.ExpandEnvironmentStrings("%USERNAME%"));
+}
+
+function createTabContentElement(content, wordLimit) {
+    const contentElement = document.createElement("div");
+
+    const { truncated, original, isTruncated } = truncateText(content, wordLimit);
+
+    const textElement = document.createElement("span");
+    textElement.innerHTML = truncated;
+    contentElement.appendChild(textElement);
+
+    if (isTruncated) {
+        const showMoreLink = document.createElement("span");
+        showMoreLink.className = "show-more-less";
+        showMoreLink.innerText = " Show more";
+        contentElement.appendChild(showMoreLink);
+
+        const showLessLink = document.createElement("span");
+        showLessLink.className = "show-more-less";
+        showLessLink.innerText = " Show less";
+        showLessLink.style.display = "none";
+        contentElement.appendChild(showLessLink);
+
+        showMoreLink.addEventListener("click", () => {
+            textElement.innerHTML = original;
+            showMoreLink.style.display = "none";
+            showLessLink.style.display = "inline";
+        });
+
+        showLessLink.addEventListener("click", () => {
+            textElement.innerHTML = truncated;
+            showMoreLink.style.display = "inline";
+            showLessLink.style.display = "none";
+        });
+    }
+
+    return contentElement;
+}
+
+function createSourceTabContentElement(content, wordLimit) {
+    const contentElement = document.createElement("div");   
+    console.log(content['page-content']);
+    const { truncated, original, isTruncated } = truncateText(content['page-content'], wordLimit);
+    console.log(truncated)
+    const textElement = document.createElement("span");
+    textElement.innerHTML = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
+        <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
+        <p class="metadata"><span class="metadata-type">Relevance Score: </span>${content.metadata.relevance_score}</p>
+        <p class="metadata"><span class="metadata-type">Metadata: </span>${truncated}</p>`;
+    contentElement.appendChild(textElement);
+
+    if (isTruncated) {
+        const showMoreLink = document.createElement("span");
+        showMoreLink.className = "show-more-less";
+        showMoreLink.innerText = " Show more";
+        contentElement.appendChild(showMoreLink);
+
+        const showLessLink = document.createElement("span");
+        showLessLink.className = "show-more-less";
+        showLessLink.innerText = " Show less";
+        showLessLink.style.display = "none";
+        contentElement.appendChild(showLessLink);
+
+        showMoreLink.addEventListener("click", () => {
+            textElement.innerHTML = original;
+            showMoreLink.style.display = "none";
+            showLessLink.style.display = "inline";
+        });
+
+        showLessLink.addEventListener("click", () => {
+            textElement.innerHTML = truncated;
+            showMoreLink.style.display = "inline";
+            showLessLink.style.display = "none";
+        });
+    }
+
+    return contentElement;
+}
+
+
+function truncateText(text, wordLimit) {
+    const words = cleanText(text).split(" ");
+    if (words.length <= wordLimit) {
+        return { truncated: text, original: text, isTruncated: false };
+    }
+    const truncated = words.slice(0, wordLimit).join(" ") + "...";
+    return { truncated: truncated, original: text, isTruncated: true };
+}
+
+function cleanText(text) {
+
+    // Remove all non-alphanumeric characters
+    let cleanedText = String(text).replace(/[^a-zA-Z0-9\s]/g, '');
+    
+    // Replace multiple spaces with a single space
+    cleanedText = cleanedText.replace(/\s+/g, ' ');
+    
+    // Trim leading and trailing spaces
+    cleanedText = cleanedText.trim();
+    console.log(cleanedText)
+    return cleanedText;
 }
