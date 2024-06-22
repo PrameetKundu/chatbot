@@ -3,7 +3,7 @@ const closeBtn = document.querySelector(".close-btn");
 const chatbox = document.querySelector(".chatbox");
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".chat-input span");
-const versionSelector = document.querySelector(".select-version")
+const versionSelector = document.querySelector(".select-version");
 
 let userMessage = null; // Variable to store user's message
 const API_KEY = "PASTE-YOUR-API-KEY"; // Paste your API key here
@@ -42,7 +42,6 @@ const generateResponse = async (chatEle) => {
     .then(data => {
         const sources = data.sources;
         let response = data.response;
-        console.log(data);
         chatEle.innerHTML =`<span class="material-symbols-outlined headset-mic">headset_mic</span>`;
         // Create the main chat element
         const chatElement = document.createElement("div");
@@ -69,7 +68,6 @@ const generateResponse = async (chatEle) => {
         responseContent.appendChild(createTabContentElement(response, wordLimit));
         chatElement.appendChild(responseContent);
         tabContents.push(responseContent);
-        console.log(typeof sources);
 
         // Source tabs
         if(typeof sources != 'undefined'){
@@ -102,6 +100,8 @@ const generateResponse = async (chatEle) => {
         
 
         chatElement.insertBefore(tabContainer, chatElement.firstChild);
+        chatElement.appendChild(createFeedbackContainer());
+
         chatEle.appendChild(chatElement);
     })    
     .catch((error) => {
@@ -206,11 +206,51 @@ function createTabContentElement(content, wordLimit) {
     return contentElement;
 }
 
+function createFeedbackContainer(){
+
+    const feedbackContainer = document.createElement('div');
+    feedbackContainer.classList.add('feedback-container');
+
+    // Create thumbs up button
+    const thumbsUpButton = document.createElement('span');
+    thumbsUpButton.classList.add('feedback');
+    thumbsUpButton.innerHTML = '<span class="material-icons">thumb_up</span>';
+    thumbsUpButton.addEventListener('click', function() {
+        thumbsUpButton.classList.toggle('selected');
+        thumbsDownButton.classList.remove('selected');
+    });
+
+    // Create thumbs down button
+    const thumbsDownButton = document.createElement('span');
+    thumbsDownButton.classList.add('feedback');
+    thumbsDownButton.innerHTML = '<span class="material-icons">thumb_down</span>';
+    thumbsDownButton.addEventListener('click', function() {
+        thumbsDownButton.classList.toggle('selected');
+        thumbsUpButton.classList.remove('selected');
+    });
+
+    // Append buttons to feedback container
+    feedbackContainer.appendChild(thumbsUpButton);
+    feedbackContainer.appendChild(thumbsDownButton);
+
+    return feedbackContainer;
+}
+
+function feedBackHandler(){
+    document.querySelector('.feedback').addEventListener('click', function() {
+        // Remove 'selected' class from all sibling elements
+        this.parentElement.querySelectorAll('.feedback').forEach(sibling => {
+            sibling.classList.remove('selected');
+        });
+
+        // Add 'selected' class to the clicked button
+        this.classList.add('selected');
+    });
+}
+
 function createSourceTabContentElement(content, wordLimit) {
     const contentElement = document.createElement("div");   
-    // console.log(content['page-content']);
     let { truncated, original, isTruncated } = truncateText(content['page-content'], wordLimit);
-    // console.log(truncated)
     const textElement = document.createElement("span");
     truncated = `<p class="metadata"><span class="metadata-type">Page: </span>${content.metadata.page}</p>
         <p class="metadata"><span class="metadata-type">Document: </span><a href=${content.metadata.source}>${content.metadata.source}</a></p>
@@ -259,7 +299,6 @@ function truncateText(text, wordLimit) {
         return { truncated: text, original: text, isTruncated: false };
     }
     const truncated = words.slice(0, wordLimit).join(" ") + "...";
-    console.log(truncated);
     return { truncated: truncated, original: text, isTruncated: true };
 }
 
@@ -273,6 +312,5 @@ function cleanText(text) {
     
     // Trim leading and trailing spaces
     cleanedText = cleanedText.trim();
-    console.log(cleanedText)
     return cleanedText;
 }

@@ -152,7 +152,7 @@ font-size: 16px;
 font-weight: 400;
 background: rgb(228, 230, 231);
 }
-.chat-input span {
+.chat-input .send-btn {
 align-self: flex-end;
 color: rgb(215, 30, 40);
 cursor: pointer;
@@ -163,7 +163,15 @@ visibility: hidden;
 font-size: 1.35rem;
 background: rgb(228, 230, 231);
 }
-.chat-input textarea:valid ~ span {
+
+.mic{
+  height: 55px;
+  font-size: 1.35rem;
+  color: rgb(215, 30, 40);
+  padding-top: 16px;
+}
+
+.chat-input textarea:valid ~ .send-btn {
 visibility: visible;
 }
 
@@ -232,7 +240,7 @@ h2 {
 
 .tab-content {
   display: none;
-  padding:  6px 12px 12px 12px;
+  padding:  6px 12px 3px 12px;
   font-size: 0.95rem;
   color:rgb(59,51,49);
 }
@@ -241,7 +249,6 @@ h2 {
   background-color: rgb(169, 169, 170);
   color: white;
   border-radius: 14px 14px 0px 0px;
-  z-index: 2;
 }
 
 .tab-content.active {
@@ -284,6 +291,26 @@ h2 {
 
 .select-version:hover {
   background-color: rgb(244, 89, 96);
+}
+
+.feedback-container{
+  display: flex;
+  justify-content: flex-end;
+  padding: 0px 12px 3px 0px;
+}
+
+.feedback {
+  cursor: pointer;
+  color: rgb(182, 182, 183);
+  margin-right: 6px;
+}
+
+.feedback span {
+  font-size: 20px !important;
+}
+
+.selected{
+  color: rgb(132, 132, 135);
 }
 
 @media (max-width: 490px) {
