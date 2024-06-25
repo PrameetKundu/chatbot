@@ -314,3 +314,51 @@ function cleanText(text) {
     cleanedText = cleanedText.trim();
     return cleanedText;
 }
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const chatInput = document.querySelector('.chat-input')
+    const micButton = document.querySelector('.mic');
+    const sendButton = document.getElementById("send-btn");
+
+    let recognition;
+
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+    } else if ('SpeechRecognition' in window) {
+        recognition = new SpeechRecognition();
+    } else {
+        alert("Speech Recognition API is not supported in this browser.");
+        return;
+    }
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    micButton.addEventListener("click", () => {
+        recognition.start();
+        micButton.style.background = "#ff0000";
+    });
+
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+        chatInput.value = finalTranscript || interimTranscript;
+    };
+
+    sendButton.addEventListener("click", () => {
+        recognition.stop();
+        micButton.style.background = "#28a745";
+        // Handle sending the message here
+        console.log(chatInput.value); // Just logging the message to console for now
+    });
+});
