@@ -314,3 +314,54 @@ function cleanText(text) {
     cleanedText = cleanedText.trim();
     return cleanedText;
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const micButton = document.querySelector('.mic');
+    const textArea = document.querySelector('.text-area');
+    const sendButton = document.getElementById('send-btn');
+
+    let recognition;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+    } else if ('SpeechRecognition' in window) {
+        recognition = new SpeechRecognition();
+    } else {
+        alert("Sorry, your browser does not support speech recognition.");
+        return;
+    }
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript + ' ';
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        textArea.value = finalTranscript + interimTranscript;
+    };
+
+    micButton.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+            micButton.classList.remove("recording");
+            isRecording = false;
+            console.log(textArea.value);
+        } else {
+            recognition.start();
+            micButton.classList.add("recording");
+            isRecording = true;
+        }
+    });
+});
