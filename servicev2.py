@@ -54,7 +54,7 @@ class DocumentQueryServicev2:
         self.retriever = ContextualCompressionRetriever(
             base_compressor= CohereRerank(), 
             base_retriever=db.as_retriever(search_kwargs={"k": 3}),
-            searchType = 'mmr'
+            searchType = 'similarity'
         )
 
     def setup_chat_template(self):
