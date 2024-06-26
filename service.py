@@ -37,11 +37,10 @@ class DocumentQueryService:
         self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         db = Chroma.from_documents(self.chunks[0:5], self.embedding_model, persist_directory="./chroma_db_")        
         db.persist()
-
-    def infoRetriever(self):    
-        self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         db_connection = Chroma(persist_directory="./chroma_db_", embedding_function=self.embedding_model)
         self.retriever = db_connection.as_retriever(search_kwargs={"k": 5})
+
+
 
     def setup_chat_template(self):
         self.chat_template = ChatPromptTemplate.from_messages([
@@ -68,9 +67,8 @@ class DocumentQueryService:
     
     def __init__(self) -> None:
         self.initialise_genai_model()
-        # self.load_documents()
-        # self.create_embeddings()
-        self.infoRetriever()
+        self.load_documents()
+        self.create_embeddings()
         self.setup_chat_template()
         self.setup_rag_chain()
         
