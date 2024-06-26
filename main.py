@@ -12,7 +12,6 @@ import os, io
 import time
 from time import perf_counter
 import json
-import jsons
 from service import DocumentQueryService
 from servicev2 import DocumentQueryServicev2
 
