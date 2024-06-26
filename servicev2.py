@@ -10,7 +10,7 @@ from langchain.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
 )
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
 from langchain_cohere import CohereRerank
 from langchain.chains import RetrievalQA
@@ -40,7 +40,7 @@ class DocumentQueryServicev2:
         self.pages2 = self.loader2.load_and_split()
         self.chunks.extend(text_splitter.split_documents(self.pages2))
         
-        print(len(self.chunks))
+        print("v2",len(self.chunks))
 
     
     def create_embeddings(self):
@@ -54,7 +54,7 @@ class DocumentQueryServicev2:
         self.retriever = ContextualCompressionRetriever(
             base_compressor= CohereRerank(), 
             base_retriever=db.as_retriever(search_kwargs={"k": 3}),
-            searchType = 'similarity'
+            searchType = 'mmr'
         )
 
     def setup_chat_template(self):
@@ -62,12 +62,12 @@ class DocumentQueryServicev2:
             SystemMessage(content="""You are a Helpful AI Bot.
                         Given a document and question from user,
                         you should answer based on the given  document"""),
-            HumanMessagePromptTemplate.from_template("""Answer the question based on the given document
+            HumanMessagePromptTemplate.from_template("""Answer the question based on the given document. If you don't know the answer, just say that you don't know, don't try to make up an answer. Keep you answers verbose.
             Context: {context}
             Question: {question}
             Answer: """)
         ])
-        self.prompt ="""Use the context (delimited by <ctx></ctx>) and the chat history (delimited by <hs></hs>) to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. Keep you answers verbose, but less than 6 lines. Bullet your points if possible. 
+        self.prompt ="""Use the context (delimited by <ctx></ctx>) and the chat history (delimited by <hs></hs>) to answer the question at the end. If you feel the question references the existing conversation, answer your question from the chat history (delimited by <hs></hs>), even if you dont find anything from the context. If you don't know the answer, just say that you don't know, don't try to make up an answer. Keep you answers verbose, but less than 6 lines. 
             <ctx>{context}</ctx>
             <hs>{history}</hs>
             {question}
@@ -81,11 +81,14 @@ class DocumentQueryServicev2:
             retriever=self.retriever,
             # retriever = db.as_retriever(),
             # chain_type_kwargs={"prompt": self.chat_template},
-            chain_type_kwargs={"prompt": self.QA_CHAIN_PROMPT,
+            chain_type_kwargs= {     "prompt" : self.chat_template,
+                                # "prompt": self.QA_CHAIN_PROMPT,
                                "verbose": True,
-                               "memory": ConversationBufferMemory(
-                                    memory_key="history",
-                                    input_key="question")},
+                            #    "memory": ConversationBufferWindowMemory(
+                            #         memory_key="history",
+                            #         input_key="question",
+                            #         k=1)
+                               },
             
             # chain_type="map_reduce",
             return_source_documents = True
