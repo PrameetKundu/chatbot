@@ -19,7 +19,7 @@ const createChatLi = (message, className) => {
 }
 
 const generateResponse = async (chatEle) => {
-    let API_URL = '/v2/query';
+    let API_URL = '/v3/query';
     if(versionSelector.value == "version1"){
         API_URL = '/v1/query';
     }
@@ -316,19 +316,20 @@ function cleanText(text) {
 }
 
 
-document.addEventListener("DOMContentLoaded", function() {
-    const chatInput = document.querySelector('.chat-input')
+document.addEventListener("DOMContentLoaded", () => {
     const micButton = document.querySelector('.mic');
-    const sendButton = document.getElementById("send-btn");
+    const textArea = document.querySelector('.text-area');
+    const sendButton = document.getElementById('send-btn');
 
     let recognition;
+    let isRecording = false;
 
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
     } else if ('SpeechRecognition' in window) {
         recognition = new SpeechRecognition();
     } else {
-        alert("Speech Recognition API is not supported in this browser.");
+        alert("Sorry, your browser does not support speech recognition.");
         return;
     }
 
@@ -336,29 +337,31 @@ document.addEventListener("DOMContentLoaded", function() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    micButton.addEventListener("click", () => {
-        recognition.start();
-        micButton.style.background = "#ff0000";
-    });
-
     recognition.onresult = (event) => {
         let interimTranscript = '';
         let finalTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                finalTranscript += transcript + ' ';
             } else {
-                interimTranscript += event.results[i][0].transcript;
+                interimTranscript += transcript;
             }
         }
-        chatInput.value = finalTranscript || interimTranscript;
+        textArea.value = finalTranscript + interimTranscript;
     };
 
-    sendButton.addEventListener("click", () => {
-        recognition.stop();
-        micButton.style.background = "#28a745";
-        // Handle sending the message here
-        console.log(chatInput.value); // Just logging the message to console for now
+    micButton.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+            micButton.classList.remove("recording");
+            isRecording = false;
+            console.log(textArea.value);
+        } else {
+            recognition.start();
+            micButton.classList.add("recording");
+            isRecording = true;
+        }
     });
 });

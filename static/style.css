@@ -309,8 +309,33 @@ h2 {
   font-size: 20px !important;
 }
 
+.mic{
+  cursor: pointer;
+  padding: 12px 12px 0px 12px;
+  border-radius: 50%;
+  font-size: 25px;
+  user-select: none;
+}
+
+@keyframes fadeBackground {
+  0% {
+    background-color: rgb(228, 230, 231); /* Starting color with low opacity */
+  }
+  50% {
+    background-color: rgb(177, 177, 179); /* Midpoint color with high opacity */
+  }
+  100% {
+    background-color: rgb(228, 230, 231); /* Ending color back to low opacity */
+  }
+}
+
 .selected{
   color: rgb(132, 132, 135);
+}
+
+.recording {
+  animation: fadeBackground 1s infinite;
+  background-color: rgb(177, 177, 179);
 }
 
 @media (max-width: 490px) {
