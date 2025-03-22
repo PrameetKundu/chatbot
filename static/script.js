@@ -145,6 +145,15 @@ const handleOption = (option) => {
                 reader.readAsText(file);
             }
         };
+    } else if (option === 'chat with me for incident resolution') {
+        handleIncidentResolution();
+    } else if (option === 'yes') {
+        // Handle the case where the user wants help to resolve the incident
+        chatbox.appendChild(createChatLi("Great! Let's proceed with the resolution.", "incoming"));
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+        // Add further steps for resolution here
+    } else if (option === 'no') {
+        showOptions();
     } else {
         userMessage = option;
         chatbox.appendChild(createChatLi(userMessage, "outgoing"));
@@ -191,6 +200,43 @@ const runScript = async (scriptContent) => {
     console.log("reached here 100")
 };
 
+const handleIncidentResolution = () => {
+    awaitingIncidentNumber = true;
+    chatbox.appendChild(createChatLi("Please enter the incident number for resolution:", "incoming"));
+    chatbox.scrollTo(0, chatbox.scrollHeight);
+};
+
+const fetchIncidentDetails = async (incidentNumber, chatEle) => {
+    const API_URL = `/incident/${incidentNumber}/details`;
+    const requestOptions = {
+        method: "GET",
+        headers: {                        
+            "Content-Type": "application/json"
+        }
+    };
+    const messageElement = chatEle.querySelector("p");
+
+    // Send GET request to API, get response and set the response as paragraph text
+    fetch(API_URL, requestOptions)
+    .then(res => {
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return res.json();
+    })
+    .then(data => {
+        const summary = `Incident Number: ${data.result[0].number}\nState: ${data.result[0].state}\nPriority: ${data.result[0].priority}\nShort Description: ${data.result[0].short_description}\nDescription: ${data.result[0].description}\n`;
+        
+        chatEle.innerHTML = `<span class="material-symbols-outlined headset-mic">headset_mic</span><p>${summary}Do you want me to help you resolve this incident?</p>`;
+        showYesOrNoButton();
+    })    
+    .catch((error) => {
+        console.log(error);
+        messageElement.classList.add("error");
+        messageElement.textContent = "Oops! Something went wrong. Please try again.";
+    }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+};
+
 const handleChat = () => {
     userMessage = chatInput.value.trim(); // Get user entered message and remove extra whitespace
     if(!userMessage) return;
@@ -205,10 +251,10 @@ const handleChat = () => {
         chatbox.scrollTo(0, chatbox.scrollHeight);
         
         setTimeout(() => {
-            const incomingChatLi = createChatLi("Fetching incident status...", "incoming");
+            const incomingChatLi = createChatLi("Fetching incident details...", "incoming");
             chatbox.appendChild(incomingChatLi);
             chatbox.scrollTo(0, chatbox.scrollHeight);
-            fetchIncidentStatus(userMessage, incomingChatLi);
+            fetchIncidentDetails(userMessage, incomingChatLi);
         }, 600);
     } else {
         // Append the user's message to the chatbox
@@ -270,15 +316,34 @@ const showOptions = () => {
         optionsDiv.classList.add("options-container");
         optionsDiv.innerHTML = `
             <li class="chat incoming">
-                <span class="material-symbols-outlined headset-mic">headset_mic</span>
-                <div>
-                <p>Thank you for contacting platform support virtual assistant, Please choose an option.</p>
-                <button class="option-btn" onclick="handleOption('get incident status')">Get Incident Status</button>
-                </br>
-                <button class="option-btn" onclick="handleOption('run automation script')">Run Automation Script</button>
-                </br>
-                <button class="option-btn" onclick="handleOption('chat with me for incident resolution')">Chat with me for incident resolution</button>
-                </div>
+            <span class="material-symbols-outlined headset-mic">headset_mic</span>
+            <div>
+            <p>Thank you for contacting platform support virtual assistant, Please choose an option.</p>
+            <button class="option-btn" onclick="handleOption('get incident status')">Get Incident Status</button>
+            <button class="option-btn" onclick="handleOption('run automation script')">Run Automation Script</button>
+            <button class="option-btn" onclick="handleOption('chat with me for incident resolution')">Chat with me for incident resolution</button>
+            <button class="option-btn" onclick="handleOption('summarize rca')">Summarize RCA</button>
+            <button class="option-btn" onclick="handleOption('launch health check')">Launch Health Check</button>
+            <button class="option-btn" onclick="handleOption('pull related incidents')">Pull Related Incidents</button>
+            </div>
+            </li>
+        `;
+        chatbox.appendChild(optionsDiv);
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+    }, 1000);
+}
+
+const showYesOrNoButton = () => {
+    setTimeout(() => {
+        const optionsDiv = document.createElement("div");
+        optionsDiv.classList.add("yes-or-no-container");
+        optionsDiv.innerHTML = `
+            <li class="chat incoming">
+            <span class="material-symbols-outlined headset-mic">headset_mic</span>
+            <div>
+            <button class="option-btn" onclick="handleOption('yes')">Yes</button>
+            <button class="option-btn" onclick="handleOption('no')">No</button>
+            </div>
             </li>
         `;
         chatbox.appendChild(optionsDiv);

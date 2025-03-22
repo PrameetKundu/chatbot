@@ -100,6 +100,17 @@ async def get_incident(incident_number: str):
     response = requests.get(url, headers=headers, auth=auth)
     return response.json()
 
+@app.get("/incident/{incident_number}/details", response_class=JSONResponse)
+async def get_incident_details(incident_number: str):
+    url = f"https://dev305679.service-now.com/api/now/table/incident?sysparm_query=number={incident_number}"
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    auth = HTTPBasicAuth("admin", "2jzx/UCkO2I@")  # Use HTTPBasicAuth for authentication
+    response = requests.get(url, headers=headers, auth=auth)
+    return response.json()
+
 @app.post("/run-script", response_class=JSONResponse)
 async def run_script(request: Request):
     
@@ -121,7 +132,7 @@ async def run_script(request: Request):
         print(stderr.decode())
 
         # Clean up the temporary file
-        # os.remove(temp_file_path)
+        os.remove(temp_file_path)
 
         if process.returncode == 0:
             # print(stdout.decode())
