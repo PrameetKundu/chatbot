@@ -114,7 +114,12 @@ const generateResponse = async (chatEle) => {
     }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
 }
 
+// Append the user's selected option to the chatbox
 const handleOption = (option) => {
+    // Append the user's selected option to the chatbox
+    chatbox.appendChild(createChatLi(option, "outgoing"));
+    chatbox.scrollTo(0, chatbox.scrollHeight);
+
     if (option === 'get incident status') {
         awaitingIncidentNumber = true;
         chatbox.appendChild(createChatLi("Please enter the incident number:", "incoming"));
