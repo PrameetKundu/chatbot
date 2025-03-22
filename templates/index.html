@@ -20,7 +20,7 @@
       <div class="header-top">
         <div class="header-bot-icon">
           <span class="material-symbols-outlined top-bot-icon">headset_mic</span>
-          <h2>Branch Banking Virtual Assistant</h2>
+          <h2>Platform Support Virtual Assistant</h2>
           <select class="select-version">
             <option value="version1">v1</option>
             <option value="version2" selected>v2</option>
@@ -31,13 +31,21 @@
       <ul class="chatbox">
         <li class="chat incoming">
           <span class="material-symbols-outlined headset-mic">headset_mic</span>
-          <div><p>Hi, thank you for contacting the virutal assistant. I'm here to help.</p></div>
+          <div>
+            <p>Thank you for contacting platform support virtual assistant, Please choose an option.</p>
+            <button class="option-btn" onclick="handleOption('get incident status')">Get Incident Status</button>
+          </br>
+            <button class="option-btn" onclick="handleOption('run automation script')">Run Automation Script</button>
+          </br>
+            <button class="option-btn" onclick="handleOption('Chat with me for incident resolution')">Chat with me for incident resolution</button>
+          </div>
         </li>
       </ul>
       <div class="chat-input">
         <textarea class="text-area" placeholder="Please type your message..." spellcheck="false" required></textarea>
         <span id="send-btn" class="material-symbols-rounded send-btn">send</span>
         <span class="material-icons mic">keyboard_voice</span>
+        <input type="file" id="script-input" style="display: none;" accept=".bat">
       </div>
     </div>
   </body>

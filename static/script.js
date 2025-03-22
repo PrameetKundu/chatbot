@@ -4,10 +4,12 @@ const chatbox = document.querySelector(".chatbox");
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".chat-input span");
 const versionSelector = document.querySelector(".select-version");
+const scriptInput = document.getElementById("script-input");
 
 let userMessage = null; // Variable to store user's message
 const API_KEY = "PASTE-YOUR-API-KEY"; // Paste your API key here
 const inputInitHeight = chatInput.scrollHeight;
+let awaitingIncidentNumber = false;
 
 const createChatLi = (message, className) => {
     // Create a chat <li> element with passed message and className
@@ -24,6 +26,7 @@ const generateResponse = async (chatEle) => {
         API_URL = '/v1/query';
     }
     const messageElement = chatEle.querySelector("p");
+    console.log("recahed here");
 
     const requestOptions = {
         method: "POST",
@@ -111,6 +114,83 @@ const generateResponse = async (chatEle) => {
     }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
 }
 
+const handleOption = (option) => {
+    if (option === 'get incident status') {
+        awaitingIncidentNumber = true;
+        chatbox.appendChild(createChatLi("Please enter the incident number:", "incoming"));
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+    } else if (option === 'run automation script') {
+        scriptInput.click();
+        scriptInput.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const scriptContent = e.target.result;
+
+                    chatbox.scrollTo(0, chatbox.scrollHeight);
+                    setTimeout(() => {
+                        const incomingChatLi = createChatLi("Script run in progress...", "incoming");
+                        chatbox.appendChild(incomingChatLi);
+                        chatbox.scrollTo(0, chatbox.scrollHeight);
+                        runScript(scriptContent).then(() => {
+                            chatbox.removeChild(incomingChatLi);
+                        }).catch((error) => {
+                            console.log(error);
+                            chatbox.removeChild(incomingChatLi);
+                            chatbox.appendChild(createChatLi("Failed to run the script. Please try again.", "incoming"));
+                        });
+                    }, 600);
+                };
+                reader.readAsText(file);
+            }
+        };
+    } else {
+        userMessage = option;
+        chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+        
+        setTimeout(() => {
+            const incomingChatLi = createChatLi("Processing...", "incoming");
+            chatbox.appendChild(incomingChatLi);
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+            generateResponse(incomingChatLi);
+        }, 600);
+    }
+}
+
+const runScript = async (scriptContent) => {
+    const API_URL = '/run-script';
+    const requestOptions = {
+        method: "POST",
+        headers: {                        
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ script: scriptContent })
+    };
+
+    await fetch(API_URL, requestOptions)
+    .then(res => res)
+    .then(async res => {
+        const data = await res.json();
+        console.log("data" + data.message)
+        if (data.message) {
+            console.log(data.message)
+            chatbox.appendChild(createChatLi(data.message, "incoming"));
+        } else if (data.error) {
+            chatbox.appendChild(createChatLi(data.error, "incoming"));
+        }
+        showOptions();
+    })  
+    .catch((error) => {
+        console.log(error);
+        chatbox.appendChild(createChatLi("Failed to run the script. Please try again.", "incoming"));
+        showOptions();
+    })
+    .finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+    console.log("reached here 100")
+};
+
 const handleChat = () => {
     userMessage = chatInput.value.trim(); // Get user entered message and remove extra whitespace
     if(!userMessage) return;
@@ -119,17 +199,91 @@ const handleChat = () => {
     chatInput.value = "";
     chatInput.style.height = `${inputInitHeight}px`;
 
-    // Append the user's message to the chatbox
-    chatbox.appendChild(createChatLi(userMessage, "outgoing"));
-    chatbox.scrollTo(0, chatbox.scrollHeight);
-    
-    setTimeout(() => {
-        // Display "Thinking..." message while waiting for the response
-        const incomingChatLi = createChatLi("Searching...", "incoming");
-        chatbox.appendChild(incomingChatLi);
+    if (awaitingIncidentNumber) {
+        awaitingIncidentNumber = false;
+        chatbox.appendChild(createChatLi(userMessage, "outgoing"));
         chatbox.scrollTo(0, chatbox.scrollHeight);
-        generateResponse(incomingChatLi);
-    }, 600);
+        
+        setTimeout(() => {
+            const incomingChatLi = createChatLi("Fetching incident status...", "incoming");
+            chatbox.appendChild(incomingChatLi);
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+            fetchIncidentStatus(userMessage, incomingChatLi);
+        }, 600);
+    } else {
+        // Append the user's message to the chatbox
+        chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+        
+        setTimeout(() => {
+            // Display "Thinking..." message while waiting for the response
+            const incomingChatLi = createChatLi("Searching...", "incoming");
+            chatbox.appendChild(incomingChatLi);
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+            generateResponse(incomingChatLi);
+        }, 600);
+    }
+}
+
+const fetchIncidentStatus = async (incidentNumber, chatEle) => {
+    const API_URL = `/incident/${incidentNumber}`;
+    const requestOptions = {
+        method: "GET",
+        headers: {                        
+            "Content-Type": "application/json"
+        }
+    }
+    const messageElement = chatEle.querySelector("p");
+
+    // Send GET request to API, get response and set the response as paragraph text
+    fetch(API_URL, requestOptions)
+    .then(res => {
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return res.json();
+    })
+    .then(data => {
+        const statusMap = {
+            1: "New",
+            2: "In Progress",
+            3: "On hold",
+            4: "Resolved",
+            5: "Closed",
+            6: "Cancelled"
+        };
+        const status = statusMap[data.result[0].incident_state] || "Unknown";
+        chatEle.innerHTML = `<span class="material-symbols-outlined headset-mic">headset_mic</span><p>Incident Status: ${status}</p>`;
+        showOptions();
+    })    
+    .catch((error) => {
+        console.log(error);
+        messageElement.classList.add("error");
+        messageElement.textContent = "Oops! Something went wrong. Please try again.";
+        showOptions();
+    }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+}
+
+const showOptions = () => {
+    setTimeout(() => {
+        const optionsDiv = document.createElement("div");
+        optionsDiv.classList.add("options-container");
+        optionsDiv.innerHTML = `
+            <li class="chat incoming">
+                <span class="material-symbols-outlined headset-mic">headset_mic</span>
+                <div>
+                <p>Thank you for contacting platform support virtual assistant, Please choose an option.</p>
+                <button class="option-btn" onclick="handleOption('get incident status')">Get Incident Status</button>
+                </br>
+                <button class="option-btn" onclick="handleOption('run automation script')">Run Automation Script</button>
+                </br>
+                <button class="option-btn" onclick="handleOption('chat with me for incident resolution')">Chat with me for incident resolution</button>
+                </div>
+            </li>
+        `;
+        chatbox.appendChild(optionsDiv);
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+    }, 1000);
 }
 
 chatInput.addEventListener("input", () => {

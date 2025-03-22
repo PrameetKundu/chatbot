@@ -112,18 +112,21 @@ justify-content: flex-end;
 }
 .chatbox .chat p {
 white-space: pre-wrap;
-padding: 12px 12px;
+padding: 10px 10px;
 border-radius: 10px 10px 0 10px;
 max-width: 75%;
 color:rgb(59,51,49);
 font-size: 0.95rem;
 background: rgb(255, 240, 200);
 word-wrap: break-word;
+margin: 2px 0px 0px 0px;
 }
 
 .chatbox .chat p.error {
 color: #721c24;
 background: #f8d7da;
+margin: 2px 0px 0px 0px;
+padding: 10px 10px;
 }
 .chatbox .incoming p {
 background: rgb(228, 230, 231);
@@ -336,6 +339,22 @@ h2 {
 .recording {
   animation: fadeBackground 1s infinite;
   background-color: rgb(177, 177, 179);
+}
+
+.option-btn {
+    background-color: rgb(215, 30, 40);
+    color: white;
+    border: none;
+    padding: 10px 10px;
+    margin: 2px 0px 0px 0px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.option-btn:hover {
+    background-color: rgb(244, 89, 96);
 }
 
 @media (max-width: 490px) {

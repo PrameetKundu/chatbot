@@ -52,7 +52,7 @@ class DocumentQueryServicev2:
         self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         db = Chroma(persist_directory="./chroma_db_v2_", embedding_function=self.embedding_model)
         self.retriever = ContextualCompressionRetriever(
-            base_compressor= CohereRerank(), 
+            base_compressor= CohereRerank(model="rerank-english-v2.0"), 
             base_retriever=db.as_retriever(search_kwargs={"k": 3}),
             searchType = 'mmr'
         )
@@ -172,5 +172,4 @@ class DocumentQueryServicev2:
         
 #     st.session_state.messages.append({"role" : "assistant", "content" : response})
 #     history.add_ai_message(response)
-   
-    
+
