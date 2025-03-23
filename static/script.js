@@ -9,7 +9,8 @@ const scriptInput = document.getElementById("script-input");
 let userMessage = null; // Variable to store user's message
 const API_KEY = "PASTE-YOUR-API-KEY"; // Paste your API key here
 const inputInitHeight = chatInput.scrollHeight;
-let awaitingIncidentNumber = false;
+let awaitingIncidentNumberforStatus = false;
+let awaitingIncidentNumberforDetails = false;
 
 const createChatLi = (message, className) => {
     // Create a chat <li> element with passed message and className
@@ -121,7 +122,7 @@ const handleOption = (option) => {
     chatbox.scrollTo(0, chatbox.scrollHeight);
 
     if (option === 'get incident status') {
-        awaitingIncidentNumber = true;
+        awaitingIncidentNumberforStatus = true;
         chatbox.appendChild(createChatLi("Please enter the incident number:", "incoming"));
         chatbox.scrollTo(0, chatbox.scrollHeight);
     } else if (option === 'run automation script') {
@@ -206,7 +207,7 @@ const runScript = async (scriptContent) => {
 };
 
 const handleIncidentResolution = () => {
-    awaitingIncidentNumber = true;
+    awaitingIncidentNumberforDetails = true;
     chatbox.appendChild(createChatLi("Please enter the incident number for resolution:", "incoming"));
     chatbox.scrollTo(0, chatbox.scrollHeight);
 };
@@ -228,8 +229,10 @@ const fetchIncidentDetails = async (incidentNumber, chatEle) => {
             throw new Error('Network response was not ok');
         }
         return res.json();
+        
     })
     .then(data => {
+        console.log("data: " + data.result);
         const summary = `Incident Number: ${data.result[0].number}\nState: ${data.result[0].state}\nPriority: ${data.result[0].priority}\nShort Description: ${data.result[0].short_description}\nDescription: ${data.result[0].description}\n`;
         
         chatEle.innerHTML = `<span class="material-symbols-outlined headset-mic">headset_mic</span><p>${summary}Do you want me to help you resolve this incident?</p>`;
@@ -250,8 +253,20 @@ const handleChat = () => {
     chatInput.value = "";
     chatInput.style.height = `${inputInitHeight}px`;
 
-    if (awaitingIncidentNumber) {
-        awaitingIncidentNumber = false;
+    if(awaitingIncidentNumberforStatus){
+        awaitingIncidentNumberforStatus = false;
+        chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+
+        setTimeout(() => {
+            const incomingChatLi = createChatLi("Fetching incident status...", "incoming");
+            chatbox.appendChild(incomingChatLi);
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+            fetchIncidentStatus(userMessage, incomingChatLi);
+        }, 600);
+    }
+    else if (awaitingIncidentNumberforDetails) {
+        awaitingIncidentNumberforDetails = false;
         chatbox.appendChild(createChatLi(userMessage, "outgoing"));
         chatbox.scrollTo(0, chatbox.scrollHeight);
         
