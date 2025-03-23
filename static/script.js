@@ -22,12 +22,9 @@ const createChatLi = (message, className) => {
 }
 
 const generateResponse = async (chatEle) => {
-    let API_URL = '/v3/query';
-    if(versionSelector.value == "version1"){
-        API_URL = '/v1/query';
-    }
+    const API_URL = '/incidentResolution/query';
     const messageElement = chatEle.querySelector("p");
-    console.log("recahed here");
+    console.log("reached here");
 
     const requestOptions = {
         method: "POST",
@@ -40,7 +37,7 @@ const generateResponse = async (chatEle) => {
         })
     }
 
-    // Send POST request to API, get response and set the reponse as paragraph text
+    // Send POST request to API, get response and set the response as paragraph text
     await fetch(API_URL, requestOptions)
     .then(res => res.json())
     .then(data => {
@@ -102,11 +99,24 @@ const generateResponse = async (chatEle) => {
             });
         }
         
-
         chatElement.insertBefore(tabContainer, chatElement.firstChild);
         chatElement.appendChild(createFeedbackContainer());
 
         chatEle.appendChild(chatElement);
+
+        // Add a button to start a new chat
+        const newChatButtonDiv = document.createElement("div");
+        newChatButtonDiv.classList.add("new-chat-container");
+        newChatButtonDiv.innerHTML = `
+            <li class="chat incoming">
+            <span class="material-symbols-outlined headset-mic">headset_mic</span>
+            <div>
+            <button class="option-btn" onclick="showOptions()">Start New Chat</button>
+            </div>
+            </li>
+        `;
+        chatbox.appendChild(newChatButtonDiv);
+        chatbox.scrollTo(0, chatbox.scrollHeight);
     })    
     .catch((error) => {
         console.log(error);

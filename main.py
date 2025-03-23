@@ -89,6 +89,22 @@ async def query(request: Request):
     finally:
         write_to_log(logger)
 
+@app.post("/incidentResolution/query", response_class=JSONResponse)
+async def query(request: Request):
+    logger = {}
+    logger["endpoint"] = "/incidentResolution/query"
+    logger["starting time"] = time.ctime()
+    time1 = time.perf_counter()
+    requestJson = await request.json()
+    print(requestJson);
+    response = queryAPI.query_Service.rag_chain.invoke(requestJson['query']) # make new RAG chain
+    logger["time elapsed"] = time.perf_counter() - time1
+    logger["response"] = response
+    try:
+        return JSONResponse(content={'response':response})
+    finally:
+        write_to_log(logger)
+
 @app.get("/incident/{incident_number}", response_class=JSONResponse)
 async def get_incident(incident_number: str):
     url = f"https://dev305679.service-now.com/api/now/table/incident?sysparm_query=number={incident_number}"
