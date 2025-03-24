@@ -614,3 +614,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+const websocket = new WebSocket("ws://localhost:8000/ws");
+
+websocket.onmessage = function(event) {
+    const message = JSON.parse(event.data);
+    if (message.type === "new") {
+        addIncidentToTable(message.incident);
+    } else if (message.type === "resolved") {
+        removeIncidentFromTable(message.incident.id);
+    }
+};
+
+function addIncidentToTable(incident) {
+    const table = document.getElementById("incident-table");
+    const row = table.insertRow();
+    row.id = `incident-${incident.id}`;
+    const cell1 = row.insertCell(0);
+    const cell2 = row.insertCell(1);
+    cell1.innerHTML = incident.id;
+    cell2.innerHTML = incident.status;
+}
+
+function removeIncidentFromTable(incidentId) {
+    const row = document.getElementById(`incident-${incidentId}`);
+    if (row) {
+        row.remove();
+    }
+}

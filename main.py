@@ -2,7 +2,7 @@ from typing import List
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, FastAPI
-from fastapi import Request
+from fastapi import Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     HTMLResponse,
@@ -48,6 +48,44 @@ app.add_middleware(
 queryAPI = QueryAPI()
 app.mount(path="/static", app=StaticFiles(directory="static", html=True),name="static")
 templates = Jinja2Templates(directory="templates")
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+manager = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+# Function to notify clients about incident updates
+async def notify_incident_update(update_type: str, incident: dict):
+    message = {
+        "type": update_type,
+        "incident": incident
+    }
+    await manager.broadcast(json.dumps(message))
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -158,6 +196,20 @@ async def run_script(request: Request):
             return JSONResponse(content={'error': 'Failed to run the script.'}, status_code=500)
     except Exception as e:
         return JSONResponse(content={'error': str(e)}, status_code=500)
+
+@app.post("/incident/{incident_id}", response_class=JSONResponse)
+async def create_incident(request: Request, incident_id: str):
+    # ...existing code to create incident...
+    incident = {"id": incident_id, "status": "new"}  # Example incident data
+    await notify_incident_update("new", incident)
+    return JSONResponse(content=incident)
+
+@app.put("/incident/{incident_id}", response_class=JSONResponse)
+async def resolve_incident(incident_id: str):
+    # ...existing code to resolve incident...
+    incident = {"id": incident_id, "status": "resolved"}  # Example incident data
+    await notify_incident_update("resolved", incident)
+    return JSONResponse(content=incident)
 
 def write_to_log(data_dict):
     fname = "log.json"
