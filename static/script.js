@@ -616,32 +616,69 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const websocket = new WebSocket("ws://localhost:8000/ws");
+let incidentSet = new Set(JSON.parse(localStorage.getItem("incidents")) || []);
 
 websocket.onmessage = function(event) {
-    console.log("reached websocket")
+    console.log("Reached WebSocket");
     const messages = JSON.parse(event.data);
+    
     messages.forEach(message => {
-        if (message.status === "1"){
-            message.status = "New";
+        if (message.status === "1" || message.status === "2") {
+            message.status = message.status === "1" ? "New" : "In Progress";
+            incidentSet.add(message);
+            saveIncidentsToLocalStorage();
             addIncidentToTable(message);
-        }
-        else if(message.status === "2") {
-            message.status="In Progress";
-            addIncidentToTable(message);
-        } else {
+        } else if (message.status === "6") {  // If incident is closed
+            incidentSet.delete(message);
+            saveIncidentsToLocalStorage();
             removeIncidentFromTable(message.id);
         }
     });
+};
+
+// Load incidents from localStorage when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+    // Fetch the current session ID from the backend
+    fetch("/session_id")
+    .then(response => response.json())
+    .then(data => {
+        let currentSessionId = data.session_id;
+        let storedSessionId = localStorage.getItem("session_id");
+
+        // If session ID has changed (app restarted), clear localStorage
+        if (storedSessionId !== currentSessionId) {
+            console.log("App restarted, clearing local storage.");
+            localStorage.clear();
+            localStorage.setItem("session_id", currentSessionId);
+        }
+    })
+    .catch(error => console.error("Error fetching session ID:", error));
+
+    console.log("Page loaded, restoring incidents");
+    let savedIncidents = JSON.parse(localStorage.getItem("incidents")) || [];
+    savedIncidents.forEach(incident => {
+        incidentSet.add(incident);
+        addIncidentToTable(incident);
+    });
+});
+
+// Save incidents to localStorage
+function saveIncidentsToLocalStorage() {
+    localStorage.setItem("incidents", JSON.stringify([...incidentSet]));
 }
 
 function addIncidentToTable(incident) {
     const table = document.getElementById("incident-table");
-    const row = table.insertRow();
-    row.id = `incident-${incident.id}`;
-    const cell1 = row.insertCell(0);
-    const cell2 = row.insertCell(1);
-    cell1.innerHTML = incident.id;
-    cell2.innerHTML = incident.status;
+    
+    // Check if the incident is already in the table to prevent duplicates
+    if (!document.getElementById(`incident-${incident.id}`)) {
+        const row = table.insertRow();
+        row.id = `incident-${incident.id}`;
+        const cell1 = row.insertCell(0);
+        const cell2 = row.insertCell(1);
+        cell1.innerHTML = incident.id;
+        cell2.innerHTML = incident.status;
+    }
 }
 
 function removeIncidentFromTable(incidentId) {

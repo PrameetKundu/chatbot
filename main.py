@@ -20,7 +20,9 @@ from subprocess import Popen, PIPE
 import asyncio
 from crewai import Agent, Task, Crew
 from apscheduler.schedulers.background import BackgroundScheduler
-
+# Generate a unique session ID on each app restart
+import uuid
+SESSION_ID = str(uuid.uuid4())
 
 # class Request(BaseModel):
 #     query: str
@@ -88,6 +90,10 @@ async def notify_incident_update(update_type: str, incident: dict):
         "incident": incident
     }
     await manager.broadcast(json.dumps(message))
+
+@app.get("/session_id")
+async def get_session_id():
+    return {"session_id": SESSION_ID}    
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
