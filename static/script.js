@@ -618,13 +618,21 @@ document.addEventListener("DOMContentLoaded", () => {
 const websocket = new WebSocket("ws://localhost:8000/ws");
 
 websocket.onmessage = function(event) {
-    const message = JSON.parse(event.data);
-    if (message.type === "new") {
-        addIncidentToTable(message.incident);
-    } else if (message.type === "resolved") {
-        removeIncidentFromTable(message.incident.id);
-    }
-};
+    console.log("reached websocket")
+    const messages = JSON.parse(event.data);
+    messages.forEach(message => {
+        if (message.status === "1"){
+            message.status = "New";
+            addIncidentToTable(message);
+        }
+        else if(message.status === "2") {
+            message.status="In Progress";
+            addIncidentToTable(message);
+        } else {
+            removeIncidentFromTable(message.id);
+        }
+    });
+}
 
 function addIncidentToTable(incident) {
     const table = document.getElementById("incident-table");
